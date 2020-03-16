@@ -5,15 +5,15 @@ from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView
 from datetime import datetime, timedelta
 from django.utils import timezone
-from threading import Thread
+from threading import Timer #, Thread
 from time import sleep
 
 from sender_app.models import EmailSender, UNSENT_STATUS, SENT_STATUS, ERROR_STATUS
 from sender_app.forms import EmailSenderForm
 
-def send_mail_thread(mail_id, subject, message, email, delay):
+def send_mail_thread(mail_id, subject, message, email): #delay):
     try:
-        sleep(delay)
+        # sleep(delay)
         send_mail(
             subject=subject,
             message=message,
@@ -42,10 +42,10 @@ class EmailSenderCreate(CreateView):
             subject = request.POST.get('subject')
             message = request.POST.get('message')
             email = request.POST.get('email')
-            delay = int(request.POST.get('delay'))
+            delay = float(request.POST.get('delay'))
             time_zone = timezone.get_current_timezone()
             create_time = time_zone.localize(datetime.now())
-            send_time = time_zone.localize(datetime.now() + timedelta(seconds=float(delay)))
+            send_time = time_zone.localize(datetime.now() + timedelta(seconds=delay))
             mail = EmailSender.objects.create(
                 subject=subject,
                 message=message,
@@ -56,8 +56,10 @@ class EmailSenderCreate(CreateView):
                 send_status=UNSENT_STATUS
                 )
             mail.save()
-            thread = Thread(target=send_mail_thread, args=(mail.id, subject, message, email, delay))
-            thread.start()
+            # thread = Thread(target=send_mail_thread, args=(mail.id, subject, message, email, delay))
+            # thread.start()
+            timer_thread = Timer(interval=delay, function=send_mail_thread, args=(mail.id, subject, message, email))
+            timer_thread.start()
             return redirect('/list/')
         return super(EmailSenderCreate, self).dispatch(request, *args, **kwargs)
 
