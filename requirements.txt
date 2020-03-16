@@ -1,0 +1,7 @@
+django
+psycopg2
+sqlparse
+asgiref
+pytz
+dj_database_url
+whitenoise
